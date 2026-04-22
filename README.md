@@ -1,6 +1,6 @@
 # MIG
 
-Finance management software built by Madeit General Dealers (MIG).
+Finance management software built by MadeIt General Dealers (MIG).
 
 ## System design module scaffold
 

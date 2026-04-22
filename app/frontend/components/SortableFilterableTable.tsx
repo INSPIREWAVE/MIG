@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 
-type Row = Record<string, string | number>;
+type Row = { id?: string | number } & Record<string, string | number | undefined>;
 
 type Props = {
   rows: Row[];
@@ -32,7 +32,7 @@ export const SortableFilterableTable = ({ rows, columns }: Props) => {
         </thead>
         <tbody>
           {filteredRows.map((row, index) => (
-            <tr key={index}>
+            <tr key={row.id ?? `${columns.map((column) => row[column]).join('-')}-${index}`}>
               {columns.map((column) => (
                 <td key={column}>{row[column]}</td>
               ))}
