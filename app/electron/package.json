@@ -1,0 +1,20 @@
+{
+  "name": "mig-electron",
+  "version": "2.5.0",
+  "private": true,
+  "main": "dist/main.js",
+  "scripts": {
+    "dev": "tsc && electron .",
+    "build": "tsc",
+    "start": "electron ."
+  },
+  "dependencies": {
+    "sql.js": "^1.12.0",
+    "bcryptjs": "^2.4.3"
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "typescript": "^5.4.5",
+    "@types/node": "^20.12.7"
+  }
+}
