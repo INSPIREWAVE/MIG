@@ -29,7 +29,7 @@ export const StepForm = ({ steps }: { steps: Step[] }) => {
           ))}
         </ul>
       )}
-      <button type="button" onClick={() => canGoBack && setActiveStep((step) => step - 1)}>
+      <button type="button" disabled={!canGoBack} onClick={() => canGoBack && setActiveStep((step) => step - 1)}>
         Previous
       </button>
       <button
