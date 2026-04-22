@@ -8,5 +8,6 @@ router.use(authenticateToken);
 
 router.get('/:key', ctrl.getSetting);
 router.post('/', ctrl.setSetting);
+router.put('/', ctrl.setSetting);
 
 export default router;

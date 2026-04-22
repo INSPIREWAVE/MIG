@@ -44,5 +44,6 @@ router.get('/daily-collection', ctrl.getDailyCollection);
 router.get('/profit', ctrl.getProfitReport);
 router.get('/financial-advisory', ctrl.getFinancialAdvisory);
 router.get('/batch-assessment', ctrl.runBatchAssessment);
+router.post('/batch-assessment', ctrl.runBatchAssessment);
 exports.default = router;
 //# sourceMappingURL=reports.routes.js.map

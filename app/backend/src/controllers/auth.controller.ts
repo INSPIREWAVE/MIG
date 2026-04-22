@@ -53,9 +53,9 @@ export async function recover(req: Request, res: Response, next: NextFunction): 
 
 export async function changePassword(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const userId = req.user!.id;
+    const username = req.user!.username;
     const { oldPassword, newPassword } = req.body;
-    const result = await authService.changePassword(userId, oldPassword, newPassword);
+    const result = await authService.changePassword(username, oldPassword, newPassword);
     res.json({ success: true, data: result });
   } catch (err) {
     next(err);

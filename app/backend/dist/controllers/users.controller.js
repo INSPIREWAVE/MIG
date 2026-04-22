@@ -7,10 +7,8 @@ exports.deleteUser = deleteUser;
 const adapter_1 = require("../db/adapter");
 async function listUsers(_req, res, next) {
     try {
-        const result = await adapter_1.db.getAllUsers();
-        if (!result.success)
-            throw Object.assign(new Error(result.error), { statusCode: 400 });
-        res.json({ success: true, data: result.users });
+        const users = await adapter_1.db.getAllUsers();
+        res.json({ success: true, data: users });
     }
     catch (err) {
         next(err);
@@ -21,8 +19,6 @@ async function updateUserRole(req, res, next) {
         const id = parseInt(req.params.id, 10);
         const { role, permissions } = req.body;
         const result = await adapter_1.db.updateUserRole(id, role, permissions || '');
-        if (!result.success)
-            throw Object.assign(new Error(result.error), { statusCode: 400 });
         adapter_1.db.logAudit('UPDATE_USER_ROLE', 'user', id, null, JSON.stringify({ role, permissions }));
         res.json({ success: true, data: result });
     }
@@ -35,8 +31,6 @@ async function toggleUserStatus(req, res, next) {
         const id = parseInt(req.params.id, 10);
         const { isActive } = req.body;
         const result = await adapter_1.db.toggleUserStatus(id, isActive);
-        if (!result.success)
-            throw Object.assign(new Error(result.error), { statusCode: 400 });
         adapter_1.db.logAudit('TOGGLE_USER_STATUS', 'user', id, null, JSON.stringify({ isActive }));
         res.json({ success: true, data: result });
     }
@@ -51,8 +45,9 @@ async function deleteUser(req, res, next) {
             res.status(400).json({ success: false, error: 'Cannot delete your own account' });
             return;
         }
+        const result = await adapter_1.db.deleteUser(id);
         adapter_1.db.logAudit('DELETE_USER', 'user', id, null, null);
-        res.json({ success: true, message: `User ${id} deleted` });
+        res.json({ success: true, data: result });
     }
     catch (err) {
         next(err);

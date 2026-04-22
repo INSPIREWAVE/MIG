@@ -9,35 +9,36 @@ exports.runBatchAssessment = runBatchAssessment;
 const adapter_1 = require("../db/adapter");
 async function getDashboard(_req, res, next) {
     try {
-        const [clients, loans, payments, overdue] = await Promise.all([
-            adapter_1.db.getClients({}),
-            adapter_1.db.getLoans({}),
-            adapter_1.db.getAllPayments({}),
+        const [loans, clients, payments, collateral, overdueInstallments] = await Promise.all([
+            adapter_1.db.getLoans(),
+            adapter_1.db.getClients(),
+            adapter_1.db.getAllPayments(),
+            adapter_1.db.getAllCollateral(),
             adapter_1.db.getOverdueInstallments(),
         ]);
-        const allLoans = loans.loans || [];
-        const activeLoans = allLoans.filter((l) => l['status'] === 'active');
-        const portfolioValue = activeLoans.reduce((sum, l) => sum + (l['amount'] || 0), 0);
-        const totalPaid = (payments.payments || []).reduce((sum, p) => sum + (p['amount'] || 0), 0);
-        const totalExpected = allLoans.reduce((sum, l) => sum + (l['totalPayable'] || l['amount'] || 0), 0);
-        const collectionRate = totalExpected > 0 ? Math.min((totalPaid / totalExpected) * 100, 100) : 0;
-        const defaultedLoans = allLoans.filter((l) => l['status'] === 'defaulted');
-        const defaultRate = allLoans.length > 0 ? (defaultedLoans.length / allLoans.length) * 100 : 0;
+        const activeLoans = loans.filter((l) => l.status === 'active' || l.status === 'pending' || l.status === 'overdue');
+        const defaultedLoans = loans.filter((l) => l.status === 'defaulted');
+        const portfolioValue = activeLoans.reduce((sum, l) => sum + (l.remainingBalance || l.balance || l.amount || 0), 0);
         const now = new Date();
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
-        const monthlyPayments = (payments.payments || []).filter((p) => p['paymentDate'] >= monthStart);
-        const monthlyRevenue = monthlyPayments.reduce((sum, p) => sum + (p['amount'] || 0), 0);
-        const kpi = {
-            totalClients: (clients.clients || []).length,
+        const monthPayments = payments.filter((p) => (p.paymentDate || p.createdAt || '') >= monthStart);
+        const monthlyRevenue = monthPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+        const totalCollateral = collateral
+            .filter((c) => c.status === 'active')
+            .reduce((sum, c) => sum + (c.acceptedValue || c.estimatedValue || 0), 0);
+        const kpis = {
+            totalClients: clients.length,
             activeLoans: activeLoans.length,
             portfolioValue,
-            collectionRate: Math.round(collectionRate * 100) / 100,
-            defaultRate: Math.round(defaultRate * 100) / 100,
+            collectionRate: loans.length > 0 ? Math.round(((loans.length - defaultedLoans.length) / loans.length) * 100) : 100,
+            defaultRate: loans.length > 0 ? Math.round((defaultedLoans.length / loans.length) * 100) : 0,
             monthlyRevenue,
-            overdueCount: (overdue.installments || []).length,
-            totalCollateral: 0,
+            overdueCount: overdueInstallments.length,
+            totalCollateral,
+            totalLoans: loans.length,
+            totalCleared: loans.filter((l) => l.status === 'paid' || l.status === 'cleared').length,
         };
-        res.json({ success: true, data: kpi });
+        res.json({ success: true, data: kpis });
     }
     catch (err) {
         next(err);
@@ -47,8 +48,6 @@ async function getPaymentChart(req, res, next) {
     try {
         const { period, groupBy } = req.query;
         const result = await adapter_1.db.getPaymentChartData(period, groupBy);
-        if (!result.success)
-            throw Object.assign(new Error(result.error), { statusCode: 400 });
         res.json({ success: true, data: result });
     }
     catch (err) {
@@ -59,8 +58,6 @@ async function getDailyCollection(req, res, next) {
     try {
         const { date } = req.query;
         const result = await adapter_1.db.getDailyCollectionReport(date);
-        if (!result.success)
-            throw Object.assign(new Error(result.error), { statusCode: 400 });
         res.json({ success: true, data: result });
     }
     catch (err) {
@@ -71,8 +68,6 @@ async function getProfitReport(req, res, next) {
     try {
         const { startDate, endDate } = req.query;
         const result = await adapter_1.db.getProfitAnalysis(startDate, endDate);
-        if (!result.success)
-            throw Object.assign(new Error(result.error), { statusCode: 400 });
         res.json({ success: true, data: result });
     }
     catch (err) {
@@ -81,18 +76,14 @@ async function getProfitReport(req, res, next) {
 }
 async function getFinancialAdvisory(_req, res, next) {
     try {
-        const [loans, payments, overdue] = await Promise.all([
-            adapter_1.db.getLoans({}),
+        const [loans, paymentStats, overdue] = await Promise.all([
+            adapter_1.db.getLoans(),
             adapter_1.db.getPaymentStats('monthly'),
             adapter_1.db.getOverdueInstallments(),
         ]);
         res.json({
             success: true,
-            data: {
-                loanPortfolio: loans.loans,
-                paymentStats: payments.stats,
-                overdueInstallments: overdue.installments,
-            },
+            data: { loanPortfolio: loans, paymentStats, overdueInstallments: overdue },
         });
     }
     catch (err) {
@@ -102,8 +93,8 @@ async function getFinancialAdvisory(_req, res, next) {
 async function runBatchAssessment(_req, res, next) {
     try {
         const result = await adapter_1.db.runBatchAssessment();
-        if (!result.success)
-            throw Object.assign(new Error(result.error), { statusCode: 400 });
+        if (result && result.success === false)
+            throw Object.assign(new Error(result.error || 'Batch assessment failed'), { statusCode: 400 });
         res.json({ success: true, data: result });
     }
     catch (err) {

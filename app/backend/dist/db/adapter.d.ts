@@ -71,6 +71,15 @@ export declare const db: {
     logAudit: (...args: any[]) => any;
     getAuditLog: (...args: any[]) => any;
     clearAuditLog: (...args: any[]) => any;
+    deleteAuditEntry: (...args: any[]) => any;
+    getClientActivity: (...args: any[]) => any;
+    updateKycStatus: (...args: any[]) => any;
+    setClientBlacklist: (...args: any[]) => any;
+    updateLoan: (...args: any[]) => any;
+    deleteLoan: (...args: any[]) => any;
+    deleteCompanyDocument: (...args: any[]) => any;
+    deleteBackup: (...args: any[]) => any;
+    deleteUser: (...args: any[]) => any;
     getSetting: (...args: any[]) => any;
     setSetting: (...args: any[]) => any;
     runBatchAssessment: (...args: any[]) => any;

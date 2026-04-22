@@ -93,9 +93,9 @@ async function recover(req, res, next) {
 }
 async function changePassword(req, res, next) {
     try {
-        const userId = req.user.id;
+        const username = req.user.username;
         const { oldPassword, newPassword } = req.body;
-        const result = await authService.changePassword(userId, oldPassword, newPassword);
+        const result = await authService.changePassword(username, oldPassword, newPassword);
         res.json({ success: true, data: result });
     }
     catch (err) {

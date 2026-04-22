@@ -8,12 +8,9 @@ const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads')
 export async function listClientDocuments(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const clientId = parseInt(req.params.clientId, 10);
-    const result = await db.getClientDocuments(clientId);
-    if (!result.success) throw Object.assign(new Error(result.error), { statusCode: 400 });
-    res.json({ success: true, data: result.documents });
-  } catch (err) {
-    next(err);
-  }
+    const docs = await db.getClientDocuments(clientId);
+    res.json({ success: true, data: docs });
+  } catch (err) { next(err); }
 }
 
 export async function uploadClientDocument(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -30,34 +27,26 @@ export async function uploadClientDocument(req: Request, res: Response, next: Ne
       fileName: req.file.originalname,
       notes: notes || '',
     });
-    if (!result.success) throw Object.assign(new Error(result.error), { statusCode: 400 });
+    if (result && result.success === false) throw Object.assign(new Error(result.error || 'Upload failed'), { statusCode: 400 });
     db.logAudit('UPLOAD_CLIENT_DOC', 'document', result.id, null, JSON.stringify({ clientId, documentType }));
     res.status(201).json({ success: true, data: result });
-  } catch (err) {
-    next(err);
-  }
+  } catch (err) { next(err); }
 }
 
 export async function deleteClientDocument(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const id = parseInt(req.params.id, 10);
     const result = await db.deleteClientDocument(id);
-    if (!result.success) throw Object.assign(new Error(result.error), { statusCode: 400 });
     db.logAudit('DELETE_CLIENT_DOC', 'document', id, null, null);
     res.json({ success: true, data: result });
-  } catch (err) {
-    next(err);
-  }
+  } catch (err) { next(err); }
 }
 
 export async function listCompanyDocuments(_req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const result = await db.getCompanyDocuments();
-    if (!result.success) throw Object.assign(new Error(result.error), { statusCode: 400 });
-    res.json({ success: true, data: result.documents });
-  } catch (err) {
-    next(err);
-  }
+    const docs = await db.getCompanyDocuments();
+    res.json({ success: true, data: docs });
+  } catch (err) { next(err); }
 }
 
 export async function uploadCompanyDocument(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -73,24 +62,19 @@ export async function uploadCompanyDocument(req: Request, res: Response, next: N
       fileName: req.file.originalname,
       notes: notes || '',
     });
-    if (!result.success) throw Object.assign(new Error(result.error), { statusCode: 400 });
+    if (result && result.success === false) throw Object.assign(new Error(result.error || 'Upload failed'), { statusCode: 400 });
     db.logAudit('UPLOAD_COMPANY_DOC', 'document', result.id, null, JSON.stringify({ documentType }));
     res.status(201).json({ success: true, data: result });
-  } catch (err) {
-    next(err);
-  }
+  } catch (err) { next(err); }
 }
 
 export async function deleteCompanyDocument(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const id = parseInt(req.params.id, 10);
-    const result = await db.deleteClientDocument(id);
-    if (!result.success) throw Object.assign(new Error(result.error), { statusCode: 400 });
+    const result = await db.deleteCompanyDocument(id);
     db.logAudit('DELETE_COMPANY_DOC', 'document', id, null, null);
     res.json({ success: true, data: result });
-  } catch (err) {
-    next(err);
-  }
+  } catch (err) { next(err); }
 }
 
 export function downloadDocument(req: Request, res: Response, next: NextFunction): void {
@@ -115,7 +99,5 @@ export function downloadDocument(req: Request, res: Response, next: NextFunction
       return;
     }
     res.sendFile(filePath);
-  } catch (err) {
-    next(err);
-  }
+  } catch (err) { next(err); }
 }

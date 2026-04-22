@@ -17,10 +17,8 @@ const UPLOAD_DIR = process.env.UPLOAD_DIR || path_1.default.join(process.cwd(), 
 async function listClientDocuments(req, res, next) {
     try {
         const clientId = parseInt(req.params.clientId, 10);
-        const result = await adapter_1.db.getClientDocuments(clientId);
-        if (!result.success)
-            throw Object.assign(new Error(result.error), { statusCode: 400 });
-        res.json({ success: true, data: result.documents });
+        const docs = await adapter_1.db.getClientDocuments(clientId);
+        res.json({ success: true, data: docs });
     }
     catch (err) {
         next(err);
@@ -40,8 +38,8 @@ async function uploadClientDocument(req, res, next) {
             fileName: req.file.originalname,
             notes: notes || '',
         });
-        if (!result.success)
-            throw Object.assign(new Error(result.error), { statusCode: 400 });
+        if (result && result.success === false)
+            throw Object.assign(new Error(result.error || 'Upload failed'), { statusCode: 400 });
         adapter_1.db.logAudit('UPLOAD_CLIENT_DOC', 'document', result.id, null, JSON.stringify({ clientId, documentType }));
         res.status(201).json({ success: true, data: result });
     }
@@ -53,8 +51,6 @@ async function deleteClientDocument(req, res, next) {
     try {
         const id = parseInt(req.params.id, 10);
         const result = await adapter_1.db.deleteClientDocument(id);
-        if (!result.success)
-            throw Object.assign(new Error(result.error), { statusCode: 400 });
         adapter_1.db.logAudit('DELETE_CLIENT_DOC', 'document', id, null, null);
         res.json({ success: true, data: result });
     }
@@ -64,10 +60,8 @@ async function deleteClientDocument(req, res, next) {
 }
 async function listCompanyDocuments(_req, res, next) {
     try {
-        const result = await adapter_1.db.getCompanyDocuments();
-        if (!result.success)
-            throw Object.assign(new Error(result.error), { statusCode: 400 });
-        res.json({ success: true, data: result.documents });
+        const docs = await adapter_1.db.getCompanyDocuments();
+        res.json({ success: true, data: docs });
     }
     catch (err) {
         next(err);
@@ -86,8 +80,8 @@ async function uploadCompanyDocument(req, res, next) {
             fileName: req.file.originalname,
             notes: notes || '',
         });
-        if (!result.success)
-            throw Object.assign(new Error(result.error), { statusCode: 400 });
+        if (result && result.success === false)
+            throw Object.assign(new Error(result.error || 'Upload failed'), { statusCode: 400 });
         adapter_1.db.logAudit('UPLOAD_COMPANY_DOC', 'document', result.id, null, JSON.stringify({ documentType }));
         res.status(201).json({ success: true, data: result });
     }
@@ -98,9 +92,7 @@ async function uploadCompanyDocument(req, res, next) {
 async function deleteCompanyDocument(req, res, next) {
     try {
         const id = parseInt(req.params.id, 10);
-        const result = await adapter_1.db.deleteClientDocument(id);
-        if (!result.success)
-            throw Object.assign(new Error(result.error), { statusCode: 400 });
+        const result = await adapter_1.db.deleteCompanyDocument(id);
         adapter_1.db.logAudit('DELETE_COMPANY_DOC', 'document', id, null, null);
         res.json({ success: true, data: result });
     }

@@ -40,5 +40,6 @@ const router = (0, express_1.Router)();
 router.use(auth_middleware_1.authenticateToken);
 router.get('/:key', ctrl.getSetting);
 router.post('/', ctrl.setSetting);
+router.put('/', ctrl.setSetting);
 exports.default = router;
 //# sourceMappingURL=settings.routes.js.map

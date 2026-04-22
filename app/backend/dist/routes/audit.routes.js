@@ -40,5 +40,6 @@ const router = (0, express_1.Router)();
 router.use(auth_middleware_1.authenticateToken, (0, auth_middleware_1.requireRole)('admin', 'manager'));
 router.get('/', ctrl.listAuditLog);
 router.delete('/', (0, auth_middleware_1.requireRole)('admin'), ctrl.clearAuditLog);
+router.delete('/:id', (0, auth_middleware_1.requireRole)('admin'), ctrl.deleteAuditEntry);
 exports.default = router;
 //# sourceMappingURL=audit.routes.js.map

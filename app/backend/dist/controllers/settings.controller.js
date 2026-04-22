@@ -6,8 +6,8 @@ const adapter_1 = require("../db/adapter");
 async function getSetting(req, res, next) {
     try {
         const { key } = req.params;
-        const result = await adapter_1.db.getSetting(key);
-        res.json({ success: true, data: { key, value: result } });
+        const value = await adapter_1.db.getSetting(key);
+        res.json({ success: true, data: { key, value } });
     }
     catch (err) {
         next(err);
@@ -20,9 +20,7 @@ async function setSetting(req, res, next) {
             res.status(400).json({ success: false, error: 'Key is required' });
             return;
         }
-        const result = await adapter_1.db.setSetting(key, value);
-        if (!result.success)
-            throw Object.assign(new Error(result.error), { statusCode: 400 });
+        await adapter_1.db.setSetting(key, value);
         res.json({ success: true, data: { key, value } });
     }
     catch (err) {

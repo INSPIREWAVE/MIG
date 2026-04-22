@@ -61,8 +61,8 @@ async function refreshAccessToken(token) {
 function logoutUser(token) {
     refreshTokenStore.delete(token);
 }
-async function registerUser(username, password, role, secQuestion, secAnswer) {
-    const result = await adapter_1.db.registerUser(username, password, role, secQuestion, secAnswer);
+async function registerUser(username, password, role, secQuestion, secAnswer, permissions) {
+    const result = await adapter_1.db.registerUser({ username, password, secQuestion, secAnswer, role, permissions: permissions || 'read,write' });
     if (!result.success)
         throw Object.assign(new Error(result.error || 'Registration failed'), { statusCode: 400 });
     return result;
@@ -73,8 +73,8 @@ async function recoverUser(username, secAnswer, newPassword) {
         throw Object.assign(new Error(result.error || 'Recovery failed'), { statusCode: 400 });
     return result;
 }
-async function changePassword(userId, oldPassword, newPassword) {
-    const result = await adapter_1.db.changePassword(userId, oldPassword, newPassword);
+async function changePassword(username, oldPassword, newPassword) {
+    const result = await adapter_1.db.changePassword(username, oldPassword, newPassword);
     if (!result.success)
         throw Object.assign(new Error(result.error || 'Password change failed'), { statusCode: 400 });
     return result;

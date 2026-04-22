@@ -8,5 +8,6 @@ router.use(authenticateToken, requireRole('admin', 'manager'));
 
 router.get('/', ctrl.listAuditLog);
 router.delete('/', requireRole('admin'), ctrl.clearAuditLog);
+router.delete('/:id', requireRole('admin'), ctrl.deleteAuditEntry);
 
 export default router;

@@ -2,19 +2,13 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.listAuditLog = listAuditLog;
 exports.clearAuditLog = clearAuditLog;
+exports.deleteAuditEntry = deleteAuditEntry;
 const adapter_1 = require("../db/adapter");
 async function listAuditLog(req, res, next) {
     try {
         const limit = parseInt(req.query.limit || '100', 10);
-        const { entityType, entityId } = req.query;
-        const result = await adapter_1.db.getAuditLog({
-            limit,
-            entityType: entityType,
-            entityId: entityId ? parseInt(entityId, 10) : undefined,
-        });
-        if (!result.success)
-            throw Object.assign(new Error(result.error), { statusCode: 400 });
-        res.json({ success: true, data: result.logs });
+        const logs = await adapter_1.db.getAuditLog(limit);
+        res.json({ success: true, data: logs });
     }
     catch (err) {
         next(err);
@@ -23,8 +17,16 @@ async function listAuditLog(req, res, next) {
 async function clearAuditLog(_req, res, next) {
     try {
         const result = await adapter_1.db.clearAuditLog();
-        if (!result.success)
-            throw Object.assign(new Error(result.error), { statusCode: 400 });
+        res.json({ success: true, data: result });
+    }
+    catch (err) {
+        next(err);
+    }
+}
+async function deleteAuditEntry(req, res, next) {
+    try {
+        const id = parseInt(req.params.id, 10);
+        const result = await adapter_1.db.deleteAuditEntry(id);
         res.json({ success: true, data: result });
     }
     catch (err) {

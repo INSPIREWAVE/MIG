@@ -14,15 +14,21 @@ exports.toggleBlacklist = toggleBlacklist;
 const adapter_1 = require("../db/adapter");
 async function listClients(req, res, next) {
     try {
+        let clients = await adapter_1.db.getClients();
         const { search, status, risk } = req.query;
-        const result = await adapter_1.db.getClients({
-            search: search,
-            status: status,
-            risk: risk,
-        });
-        if (!result.success)
-            throw Object.assign(new Error(result.error), { statusCode: 400 });
-        res.json({ success: true, data: result.clients });
+        if (search) {
+            const q = search.toLowerCase();
+            clients = clients.filter((c) => c.name?.toLowerCase().includes(q) ||
+                c.phone?.toLowerCase().includes(q) ||
+                c.clientNumber?.toLowerCase().includes(q) ||
+                c.nrc?.toLowerCase().includes(q) ||
+                c.email?.toLowerCase().includes(q));
+        }
+        if (status)
+            clients = clients.filter((c) => c.clientStatus === status);
+        if (risk)
+            clients = clients.filter((c) => c.riskLevel === risk);
+        res.json({ success: true, data: clients });
     }
     catch (err) {
         next(err);
@@ -31,11 +37,11 @@ async function listClients(req, res, next) {
 async function getClient(req, res, next) {
     try {
         const id = parseInt(req.params.id, 10);
-        const clientResult = await adapter_1.db.getClientById(id);
-        if (!clientResult.success)
-            throw Object.assign(new Error(clientResult.error || 'Client not found'), { statusCode: 404 });
-        const statsResult = await adapter_1.db.getClientStats(id);
-        res.json({ success: true, data: { ...clientResult.client, stats: statsResult.stats } });
+        const client = await adapter_1.db.getClientById(id);
+        if (!client)
+            throw Object.assign(new Error('Client not found'), { statusCode: 404 });
+        const stats = await adapter_1.db.getClientStats(id);
+        res.json({ success: true, data: { ...client, stats } });
     }
     catch (err) {
         next(err);
@@ -44,8 +50,8 @@ async function getClient(req, res, next) {
 async function createClient(req, res, next) {
     try {
         const result = await adapter_1.db.addClient(req.body);
-        if (!result.success)
-            throw Object.assign(new Error(result.error), { statusCode: 400 });
+        if (result && result.success === false)
+            throw Object.assign(new Error(result.error || 'Failed to create client'), { statusCode: 400 });
         adapter_1.db.logAudit('CREATE_CLIENT', 'client', result.id, null, JSON.stringify(req.body));
         res.status(201).json({ success: true, data: result });
     }
@@ -57,8 +63,6 @@ async function updateClient(req, res, next) {
     try {
         const id = parseInt(req.params.id, 10);
         const result = await adapter_1.db.updateClient(id, req.body);
-        if (!result.success)
-            throw Object.assign(new Error(result.error), { statusCode: 400 });
         adapter_1.db.logAudit('UPDATE_CLIENT', 'client', id, null, JSON.stringify(req.body));
         res.json({ success: true, data: result });
     }
@@ -70,8 +74,6 @@ async function deleteClient(req, res, next) {
     try {
         const id = parseInt(req.params.id, 10);
         const result = await adapter_1.db.deleteClient(id);
-        if (!result.success)
-            throw Object.assign(new Error(result.error), { statusCode: 400 });
         adapter_1.db.logAudit('DELETE_CLIENT', 'client', id, null, null);
         res.json({ success: true, data: result });
     }
@@ -82,10 +84,8 @@ async function deleteClient(req, res, next) {
 async function getClientLoans(req, res, next) {
     try {
         const id = parseInt(req.params.id, 10);
-        const result = await adapter_1.db.getLoansByClient(id);
-        if (!result.success)
-            throw Object.assign(new Error(result.error), { statusCode: 400 });
-        res.json({ success: true, data: result.loans });
+        const loans = await adapter_1.db.getLoansByClient(id);
+        res.json({ success: true, data: loans });
     }
     catch (err) {
         next(err);
@@ -94,10 +94,8 @@ async function getClientLoans(req, res, next) {
 async function getClientDocuments(req, res, next) {
     try {
         const id = parseInt(req.params.id, 10);
-        const result = await adapter_1.db.getClientDocuments(id);
-        if (!result.success)
-            throw Object.assign(new Error(result.error), { statusCode: 400 });
-        res.json({ success: true, data: result.documents });
+        const docs = await adapter_1.db.getClientDocuments(id);
+        res.json({ success: true, data: docs });
     }
     catch (err) {
         next(err);
@@ -106,10 +104,9 @@ async function getClientDocuments(req, res, next) {
 async function getClientActivity(req, res, next) {
     try {
         const id = parseInt(req.params.id, 10);
-        const result = await adapter_1.db.getAuditLog({ entityType: 'client', entityId: id, limit: 50 });
-        if (!result.success)
-            throw Object.assign(new Error(result.error), { statusCode: 400 });
-        res.json({ success: true, data: result.logs });
+        const limit = parseInt(req.query.limit || '50', 10);
+        const activity = await adapter_1.db.getClientActivity(id, limit);
+        res.json({ success: true, data: activity });
     }
     catch (err) {
         next(err);
@@ -118,11 +115,11 @@ async function getClientActivity(req, res, next) {
 async function getClientStats(req, res, next) {
     try {
         const id = parseInt(req.params.id, 10);
-        const [statsResult, riskResult] = await Promise.all([
+        const [stats, risk] = await Promise.all([
             adapter_1.db.getClientStats(id),
             adapter_1.db.calculateClientRisk(id),
         ]);
-        res.json({ success: true, data: { stats: statsResult.stats, risk: riskResult.risk } });
+        res.json({ success: true, data: { ...stats, ...risk } });
     }
     catch (err) {
         next(err);
@@ -131,11 +128,9 @@ async function getClientStats(req, res, next) {
 async function updateKycStatus(req, res, next) {
     try {
         const id = parseInt(req.params.id, 10);
-        const { kycStatus } = req.body;
-        const result = await adapter_1.db.updateClient(id, { kycStatus });
-        if (!result.success)
-            throw Object.assign(new Error(result.error), { statusCode: 400 });
-        adapter_1.db.logAudit('KYC_UPDATE', 'client', id, null, JSON.stringify({ kycStatus }));
+        const { status, notes } = req.body;
+        const result = await adapter_1.db.updateKycStatus(id, status, notes);
+        adapter_1.db.logAudit('KYC_UPDATE', 'client', id, null, JSON.stringify({ status }));
         res.json({ success: true, data: result });
     }
     catch (err) {
@@ -146,9 +141,9 @@ async function toggleBlacklist(req, res, next) {
     try {
         const id = parseInt(req.params.id, 10);
         const { blacklisted, reason } = req.body;
-        const result = await adapter_1.db.updateClient(id, { blacklisted: blacklisted ? 1 : 0, notes: reason });
-        if (!result.success)
-            throw Object.assign(new Error(result.error), { statusCode: 400 });
+        const result = await adapter_1.db.setClientBlacklist(id, !!blacklisted, reason || '');
+        if (result && result.success === false)
+            throw Object.assign(new Error(result.error || 'Blacklist update failed'), { statusCode: 400 });
         adapter_1.db.logAudit('BLACKLIST_TOGGLE', 'client', id, null, JSON.stringify({ blacklisted, reason }));
         res.json({ success: true, data: result });
     }

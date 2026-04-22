@@ -8,7 +8,7 @@ export declare function refreshAccessToken(token: string): Promise<{
     accessToken: string;
 }>;
 export declare function logoutUser(token: string): void;
-export declare function registerUser(username: string, password: string, role: string, secQuestion: string, secAnswer: string): Promise<any>;
+export declare function registerUser(username: string, password: string, role: string, secQuestion: string, secAnswer: string, permissions?: string): Promise<any>;
 export declare function recoverUser(username: string, secAnswer: string, newPassword: string): Promise<any>;
-export declare function changePassword(userId: number, oldPassword: string, newPassword: string): Promise<any>;
+export declare function changePassword(username: string, oldPassword: string, newPassword: string): Promise<any>;
 //# sourceMappingURL=auth.service.d.ts.map

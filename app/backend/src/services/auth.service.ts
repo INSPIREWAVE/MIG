@@ -60,8 +60,8 @@ export function logoutUser(token: string) {
   refreshTokenStore.delete(token);
 }
 
-export async function registerUser(username: string, password: string, role: string, secQuestion: string, secAnswer: string) {
-  const result = await db.registerUser(username, password, role, secQuestion, secAnswer);
+export async function registerUser(username: string, password: string, role: string, secQuestion: string, secAnswer: string, permissions?: string) {
+  const result = await db.registerUser({ username, password, secQuestion, secAnswer, role, permissions: permissions || 'read,write' });
   if (!result.success) throw Object.assign(new Error(result.error || 'Registration failed'), { statusCode: 400 });
   return result;
 }
@@ -72,8 +72,8 @@ export async function recoverUser(username: string, secAnswer: string, newPasswo
   return result;
 }
 
-export async function changePassword(userId: number, oldPassword: string, newPassword: string) {
-  const result = await db.changePassword(userId, oldPassword, newPassword);
+export async function changePassword(username: string, oldPassword: string, newPassword: string) {
+  const result = await db.changePassword(username, oldPassword, newPassword);
   if (!result.success) throw Object.assign(new Error(result.error || 'Password change failed'), { statusCode: 400 });
   return result;
 }

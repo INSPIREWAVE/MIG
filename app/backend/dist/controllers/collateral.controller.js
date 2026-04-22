@@ -10,10 +10,8 @@ exports.forfeitCollateral = forfeitCollateral;
 const adapter_1 = require("../db/adapter");
 async function listCollateral(req, res, next) {
     try {
-        const result = await adapter_1.db.getAllCollateral();
-        if (!result.success)
-            throw Object.assign(new Error(result.error), { statusCode: 400 });
-        res.json({ success: true, data: result.collateral });
+        const collateral = await adapter_1.db.getAllCollateral();
+        res.json({ success: true, data: collateral });
     }
     catch (err) {
         next(err);
@@ -22,10 +20,8 @@ async function listCollateral(req, res, next) {
 async function getCollateralByLoan(req, res, next) {
     try {
         const loanId = parseInt(req.params.loanId, 10);
-        const result = await adapter_1.db.getCollateralByLoan(loanId);
-        if (!result.success)
-            throw Object.assign(new Error(result.error), { statusCode: 400 });
-        res.json({ success: true, data: result.collateral });
+        const collateral = await adapter_1.db.getCollateralByLoan(loanId);
+        res.json({ success: true, data: collateral });
     }
     catch (err) {
         next(err);
@@ -34,10 +30,8 @@ async function getCollateralByLoan(req, res, next) {
 async function getCollateralByClient(req, res, next) {
     try {
         const clientId = parseInt(req.params.clientId, 10);
-        const result = await adapter_1.db.getCollateralByClient(clientId);
-        if (!result.success)
-            throw Object.assign(new Error(result.error), { statusCode: 400 });
-        res.json({ success: true, data: result.collateral });
+        const collateral = await adapter_1.db.getCollateralByClient(clientId);
+        res.json({ success: true, data: collateral });
     }
     catch (err) {
         next(err);
@@ -46,8 +40,8 @@ async function getCollateralByClient(req, res, next) {
 async function addCollateral(req, res, next) {
     try {
         const result = await adapter_1.db.addCollateral(req.body);
-        if (!result.success)
-            throw Object.assign(new Error(result.error), { statusCode: 400 });
+        if (result && result.success === false)
+            throw Object.assign(new Error(result.error || 'Failed to add collateral'), { statusCode: 400 });
         adapter_1.db.logAudit('ADD_COLLATERAL', 'collateral', result.id, null, JSON.stringify(req.body));
         res.status(201).json({ success: true, data: result });
     }
@@ -59,8 +53,6 @@ async function updateCollateral(req, res, next) {
     try {
         const id = parseInt(req.params.id, 10);
         const result = await adapter_1.db.updateCollateral(id, req.body);
-        if (!result.success)
-            throw Object.assign(new Error(result.error), { statusCode: 400 });
         adapter_1.db.logAudit('UPDATE_COLLATERAL', 'collateral', id, null, JSON.stringify(req.body));
         res.json({ success: true, data: result });
     }
@@ -72,8 +64,6 @@ async function deleteCollateral(req, res, next) {
     try {
         const id = parseInt(req.params.id, 10);
         const result = await adapter_1.db.deleteCollateral(id);
-        if (!result.success)
-            throw Object.assign(new Error(result.error), { statusCode: 400 });
         adapter_1.db.logAudit('DELETE_COLLATERAL', 'collateral', id, null, null);
         res.json({ success: true, data: result });
     }
@@ -84,11 +74,10 @@ async function deleteCollateral(req, res, next) {
 async function forfeitCollateral(req, res, next) {
     try {
         const id = parseInt(req.params.id, 10);
-        const { reason } = req.body;
-        const result = await adapter_1.db.forfeitCollateral(id, reason || '');
-        if (!result.success)
-            throw Object.assign(new Error(result.error), { statusCode: 400 });
-        adapter_1.db.logAudit('FORFEIT_COLLATERAL', 'collateral', id, null, JSON.stringify({ reason }));
+        const result = await adapter_1.db.forfeitCollateral(id);
+        if (result && result.success === false)
+            throw Object.assign(new Error(result.error || 'Forfeit failed'), { statusCode: 400 });
+        adapter_1.db.logAudit('FORFEIT_COLLATERAL', 'collateral', id, null, null);
         res.json({ success: true, data: result });
     }
     catch (err) {
