@@ -1,0 +1,18 @@
+{
+  "name": "mig-lms",
+  "version": "2.5.0",
+  "private": true,
+  "workspaces": ["app/backend", "app/frontend", "app/electron"],
+  "scripts": {
+    "dev:backend": "npm run dev --workspace=app/backend",
+    "dev:frontend": "npm run dev --workspace=app/frontend",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "build:backend": "npm run build --workspace=app/backend",
+    "build:frontend": "npm run build --workspace=app/frontend",
+    "build": "npm run build:backend && npm run build:frontend",
+    "seed": "node app/backend/dist/seed.js"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
