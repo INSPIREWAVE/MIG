@@ -13,8 +13,16 @@ export const SortableFilterableTable = ({ rows, columns }: Props) => {
 
   const filteredRows = useMemo(() => {
     return rows
-      .filter((row) => JSON.stringify(row).toLowerCase().includes(query.toLowerCase()))
-      .sort((a, b) => `${a[sortBy]}`.localeCompare(`${b[sortBy]}`));
+      .map((row, sourceIndex) => ({ row, sourceIndex }))
+      .filter(({ row }) =>
+        columns.some((column) => `${row[column] ?? ''}`.toLowerCase().includes(query.toLowerCase()))
+      )
+      .sort(({ row: a }, { row: b }) => {
+        const left = a[sortBy];
+        const right = b[sortBy];
+        if (typeof left === 'number' && typeof right === 'number') return left - right;
+        return `${left ?? ''}`.localeCompare(`${right ?? ''}`);
+      });
   }, [rows, query, sortBy]);
 
   return (
@@ -31,8 +39,8 @@ export const SortableFilterableTable = ({ rows, columns }: Props) => {
           </tr>
         </thead>
         <tbody>
-          {filteredRows.map((row, index) => (
-            <tr key={row.id ?? `${columns.map((column) => row[column]).join('-')}-${index}`}>
+          {filteredRows.map(({ row, sourceIndex }) => (
+            <tr key={row.id ?? `row-${sourceIndex}`}>
               {columns.map((column) => (
                 <td key={column}>{row[column]}</td>
               ))}

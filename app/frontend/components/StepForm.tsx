@@ -25,8 +25,8 @@ export const StepForm = ({ steps }: { steps: Step[] }) => {
       {steps[activeStep]?.content}
       {(errors.length > 0 || activeErrors.length > 0) && (
         <ul>
-          {[...errors, ...activeErrors].map((error) => (
-            <li key={error}>{error}</li>
+          {[...errors, ...activeErrors].map((error, i) => (
+            <li key={`${error}-${i}`}>{error}</li>
           ))}
         </ul>
       )}
