@@ -23,7 +23,7 @@ export const SortableFilterableTable = ({ rows, columns }: Props) => {
         if (typeof left === 'number' && typeof right === 'number') return left - right;
         return `${left ?? ''}`.localeCompare(`${right ?? ''}`);
       });
-  }, [rows, query, sortBy]);
+  }, [rows, columns, query, sortBy]);
 
   return (
     <section>

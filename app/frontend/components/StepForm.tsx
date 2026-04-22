@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 type Step = {
   id: string;
@@ -18,18 +18,13 @@ export const StepForm = ({ steps }: { steps: Step[] }) => {
     setErrors([]);
   }, [activeStep]);
 
-  const activeErrors = useMemo(() => {
-    const error = steps[activeStep]?.validate();
-    return error ? [error] : [];
-  }, [activeStep, steps]);
-
   return (
     <form>
       <h2>{steps[activeStep]?.title}</h2>
       {steps[activeStep]?.content}
-      {(errors.length > 0 || activeErrors.length > 0) && (
+      {errors.length > 0 && (
         <ul>
-          {[...errors, ...activeErrors].map((error, i) => (
+          {errors.map((error, i) => (
             <li key={`${error}-${i}`}>{error}</li>
           ))}
         </ul>
