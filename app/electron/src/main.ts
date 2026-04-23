@@ -1,4 +1,13 @@
-import { app, BrowserWindow, ipcMain, dialog, shell } from 'electron';
+import {
+  app,
+  BrowserWindow,
+  ipcMain,
+  dialog,
+  shell,
+  type IpcMainInvokeEvent,
+  type OpenDialogOptions,
+  type SaveDialogOptions,
+} from 'electron';
 import path from 'path';
 import fs from 'fs';
 
@@ -60,13 +69,14 @@ app.on('activate', async () => {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function handleDb(channel: string, fn: (...args: any[]) => any) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ipcMain.handle(channel, async (_event, ...args) => {
+  ipcMain.handle(channel, async (_event: IpcMainInvokeEvent, ...args: unknown[]) => {
     try {
       const result = await fn(...args);
       return { success: true, data: result };
-    } catch (err: any) {
-      console.error(`[IPC ${channel}] Error:`, err.message);
-      return { success: false, error: err.message };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      console.error(`[IPC ${channel}] Error:`, message);
+      return { success: false, error: message };
     }
   });
 }
@@ -175,19 +185,19 @@ handleDb('backups:restore', (id: number) => db.restoreBackup(id));
 handleDb('backups:delete', (id: number) => db.deleteBackup(id));
 
 // Native dialogs
-ipcMain.handle('dialog:openFile', async (_event, options: Electron.OpenDialogOptions) => {
+ipcMain.handle('dialog:openFile', async (_event: IpcMainInvokeEvent, options: OpenDialogOptions) => {
   if (!mainWindow) return null;
   const result = await dialog.showOpenDialog(mainWindow, options);
   return result.canceled ? null : result.filePaths[0];
 });
 
-ipcMain.handle('dialog:saveFile', async (_event, options: Electron.SaveDialogOptions) => {
+ipcMain.handle('dialog:saveFile', async (_event: IpcMainInvokeEvent, options: SaveDialogOptions) => {
   if (!mainWindow) return null;
   const result = await dialog.showSaveDialog(mainWindow, options);
   return result.canceled ? null : result.filePath;
 });
 
-ipcMain.handle('shell:openPath', async (_event, filePath: string) => {
+ipcMain.handle('shell:openPath', async (_event: IpcMainInvokeEvent, filePath: string) => {
   await shell.openPath(filePath);
 });
 
@@ -202,7 +212,7 @@ interface SyncQueueItem {
 }
 const syncQueue: SyncQueueItem[] = [];
 
-ipcMain.handle('sync:enqueue', (_event, item: Omit<SyncQueueItem, 'retries'>) => {
+ipcMain.handle('sync:enqueue', (_event: IpcMainInvokeEvent, item: Omit<SyncQueueItem, 'retries'>) => {
   syncQueue.push({ ...item, retries: 0 });
   return { success: true, queueLength: syncQueue.length };
 });
@@ -216,7 +226,7 @@ ipcMain.handle('sync:clearQueue', () => {
   return { success: true };
 });
 
-ipcMain.handle('sync:removeItem', (_event, id: string) => {
+ipcMain.handle('sync:removeItem', (_event: IpcMainInvokeEvent, id: string) => {
   const idx = syncQueue.findIndex(i => i.id === id);
   if (idx !== -1) syncQueue.splice(idx, 1);
   return { success: true };

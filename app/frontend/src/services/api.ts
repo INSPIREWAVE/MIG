@@ -132,10 +132,14 @@ export const accounts = {
 export const documents = {
   getClientDocs: (clientId: number) =>
     api.get(`/documents/client/${clientId}`).then((r) => r.data),
-  uploadClientDoc: (clientId: number, formData: FormData) =>
-    api.post(`/documents/client/${clientId}`, formData, {
+  uploadClientDoc: (clientId: number, formData: FormData) => {
+    const payload = new FormData();
+    formData.forEach((value, key) => payload.append(key, value));
+    payload.set('clientId', String(clientId));
+    return api.post('/documents/client', payload, {
       headers: { 'Content-Type': 'multipart/form-data' },
-    }).then((r) => r.data),
+    }).then((r) => r.data);
+  },
   deleteClientDoc: (id: number) => api.delete(`/documents/client/${id}`).then((r) => r.data),
   getCompanyDocs: () => api.get('/documents/company').then((r) => r.data),
   uploadCompanyDoc: (formData: FormData) =>
@@ -147,9 +151,9 @@ export const documents = {
 
 // ─── Audit ─────────────────────────────────────────────────────────────────
 export const audit = {
-  list: (limit = 100) => api.get('/audit-logs', { params: { limit } }).then((r) => r.data),
-  clear: () => api.delete('/audit-logs').then((r) => r.data),
-  deleteEntry: (id: number) => api.delete(`/audit-logs/${id}`).then((r) => r.data),
+  list: (limit = 100) => api.get('/audit', { params: { limit } }).then((r) => r.data),
+  clear: () => api.delete('/audit').then((r) => r.data),
+  deleteEntry: (id: number) => api.delete(`/audit/${id}`).then((r) => r.data),
 };
 
 // ─── Reports ───────────────────────────────────────────────────────────────
