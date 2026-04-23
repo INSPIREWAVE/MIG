@@ -15,7 +15,7 @@ function wrap(fnName: string) {
 }
 
 export const db = {
-  init: (userDataPath?: string) => dbModule['initDB'](userDataPath || DB_PATH),
+  init: (userDataPath?: string) => dbModule['init'](userDataPath || DB_PATH),
   addClient: wrap('addClient'),
   getClients: wrap('getClients'),
   getClientById: wrap('getClientById'),
