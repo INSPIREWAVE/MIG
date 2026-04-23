@@ -133,8 +133,10 @@ export const documents = {
   getClientDocs: (clientId: number) =>
     api.get(`/documents/client/${clientId}`).then((r) => r.data),
   uploadClientDoc: (clientId: number, formData: FormData) => {
-    formData.set('clientId', String(clientId));
-    return api.post('/documents/client', formData, {
+    const payload = new FormData();
+    formData.forEach((value, key) => payload.append(key, value));
+    payload.set('clientId', String(clientId));
+    return api.post('/documents/client', payload, {
       headers: { 'Content-Type': 'multipart/form-data' },
     }).then((r) => r.data);
   },
