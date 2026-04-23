@@ -38,6 +38,7 @@ router.use(authenticateToken);
 
 router.get('/client/:clientId', ctrl.listClientDocuments);
 router.post('/client', upload.single('file'), ctrl.uploadClientDocument);
+router.post('/client/:clientId', upload.single('file'), ctrl.uploadClientDocument);
 router.delete('/client/:id', ctrl.deleteClientDocument);
 router.get('/company', ctrl.listCompanyDocuments);
 router.post('/company', upload.single('file'), ctrl.uploadCompanyDocument);

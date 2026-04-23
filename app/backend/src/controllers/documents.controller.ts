@@ -19,9 +19,15 @@ export async function uploadClientDocument(req: Request, res: Response, next: Ne
       res.status(400).json({ success: false, error: 'No file uploaded' });
       return;
     }
-    const { clientId, documentType, notes } = req.body;
+    const { documentType, notes } = req.body;
+    const rawClientId = req.params.clientId ?? req.body.clientId;
+    const clientId = parseInt(String(rawClientId ?? ''), 10);
+    if (isNaN(clientId)) {
+      res.status(400).json({ success: false, error: 'Valid clientId is required' });
+      return;
+    }
     const result = await db.addClientDocument({
-      clientId: parseInt(clientId, 10),
+      clientId,
       documentType,
       filePath: req.file.path,
       fileName: req.file.originalname,
